@@ -1,0 +1,24 @@
+{
+  "name": "md-deskchat-websocket",
+  "version": "2.0.0",
+  "description": "WebSocket server for MD DeskChat real-time messaging (Optimized)",
+  "main": "server-optimized.js",
+  "scripts": {
+    "start": "node server-optimized.js",
+    "start:basic": "node server.js",
+    "start:optimized": "node server-optimized.js",
+    "start:debug": "DEBUG=true node server-optimized.js"
+  },
+  "keywords": ["websocket", "socket.io", "chat", "real-time", "optimized"],
+  "author": "MD DeskChat Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.6.1",
+    "mysql2": "^3.6.5",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
