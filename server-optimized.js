@@ -78,12 +78,22 @@ io.on('connection', (socket) => {
             // Set correct status immediately based on receiver online status
             const status = receiverSocketId ? 'delivered' : 'sent';
             
+            // Get sender's name from MessageUsers table
+            const [senderRows] = await pool.execute(
+                'SELECT FullName FROM MessageUsers WHERE Id = ?',
+                [data.senderId]
+            );
+            
+            const senderName = senderRows.length > 0 ? senderRows[0].FullName : 'User';
+            
             const [result] = await pool.execute(
                 'INSERT INTO Messages (SenderId, ReceiverId, MessageText, status, CreatedAt) VALUES (?, ?, ?, ?, NOW())',
                 [data.senderId, data.receiverId, data.text, status]
             );
             
             const messageId = result.insertId;
+            
+            log(`✅ Message ${messageId} saved to database with status: ${status}`);
             
             // OPTIMIZATION: Parallel operations (don't wait for each other)
             const operations = [];
@@ -96,6 +106,7 @@ io.on('connection', (socket) => {
                             id: messageId,
                             senderId: data.senderId,
                             receiverId: data.receiverId,
+                            sender: senderName,
                             text: data.text,
                             timestamp: new Date(),
                             isOwn: false,
@@ -105,7 +116,7 @@ io.on('connection', (socket) => {
                     })
                 );
                 
-                log(`✅ Message ${messageId} delivered to user ${data.receiverId}`);
+                log(`✅ Message ${messageId} delivered to user ${data.receiverId} (socket: ${receiverSocketId})`);
             } else {
                 log(`⚠️ User ${data.receiverId} is offline, message saved`);
             }
@@ -116,6 +127,8 @@ io.on('connection', (socket) => {
                 tempId: data.tempId,
                 status: status
             });
+            
+            log(`✅ Confirmed to sender ${data.senderId}: message ${messageId} status ${status}`);
             
             // Execute all operations in parallel
             if (operations.length > 0) {
