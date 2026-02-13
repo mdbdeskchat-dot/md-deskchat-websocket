@@ -196,6 +196,26 @@ io.on('connection', (socket) => {
         }
     });
     
+    // Message deleted
+    socket.on('message_deleted', async (data) => {
+        try {
+            log(`🗑️ Message ${data.messageId} deleted by user ${data.senderId}`);
+            
+            // Notify receiver if online
+            const receiverSocketId = onlineUsers.get(data.receiverId);
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit('message_deleted', {
+                    messageId: data.messageId,
+                    deletedText: data.deletedText
+                });
+                log(`✅ Notified receiver ${data.receiverId} about deleted message`);
+            }
+            
+        } catch (error) {
+            console.error('❌ Message deleted error:', error);
+        }
+    });
+    
     // User disconnect
     socket.on('disconnect', () => {
         if (socket.userId) {
