@@ -58,11 +58,26 @@ io.on('connection', (socket) => {
         
         log(`👤 User ${userId} joined (${onlineUsers.size} online)`);
         
-        // OPTIMIZATION: Only broadcast to user's contacts (not all users)
-        // For now, broadcast to all (will optimize later with contacts list)
+        // Broadcast to all that this user is online
         io.emit('user_online', { 
             userId: userId, 
             isOnline: true 
+        });
+    });
+    
+    // Get online status of specific users
+    socket.on('get_online_status', (data) => {
+        if (!data.userIds || !Array.isArray(data.userIds)) return;
+        
+        log(`📡 Sending online status for ${data.userIds.length} users`);
+        
+        // Send online status for each requested user
+        data.userIds.forEach(userId => {
+            const isOnline = onlineUsers.has(userId);
+            socket.emit('user_online', {
+                userId: userId,
+                isOnline: isOnline
+            });
         });
     });
     
