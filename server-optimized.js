@@ -206,9 +206,12 @@ io.on('connection', (socket) => {
             if (receiverSocketId) {
                 io.to(receiverSocketId).emit('message_deleted', {
                     messageId: data.messageId,
+                    senderId: data.senderId,
                     deletedText: data.deletedText
                 });
                 log(`✅ Notified receiver ${data.receiverId} about deleted message`);
+            } else {
+                log(`⚠️ Receiver ${data.receiverId} is offline`);
             }
             
         } catch (error) {
