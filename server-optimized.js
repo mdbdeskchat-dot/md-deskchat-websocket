@@ -88,10 +88,13 @@ io.on('connection', (socket) => {
             
             // Check if receiver is online FIRST (before database)
             const receiverSocketId = onlineUsers.get(data.receiverId);
+            const isReceiverOnline = !!receiverSocketId;
             
             // OPTIMIZATION: Single query instead of 2 queries (50% faster!)
             // Set correct status immediately based on receiver online status
-            const status = receiverSocketId ? 'delivered' : 'sent';
+            const status = isReceiverOnline ? 'delivered' : 'sent';
+            
+            log(`📊 Receiver ${data.receiverId} is ${isReceiverOnline ? 'ONLINE' : 'OFFLINE'} - setting status to: ${status}`);
             
             // Get sender's name from MessageUsers table
             const [senderRows] = await pool.execute(
@@ -133,14 +136,14 @@ io.on('connection', (socket) => {
                 
                 log(`✅ Message ${messageId} delivered to user ${data.receiverId} (socket: ${receiverSocketId})`);
             } else {
-                log(`⚠️ User ${data.receiverId} is offline, message saved`);
+                log(`⚠️ User ${data.receiverId} is offline, message saved with 'sent' status`);
             }
             
             // Confirm to sender (don't wait)
             socket.emit('message_sent', { 
                 messageId: messageId,
                 tempId: data.tempId,
-                status: status
+                status: status  // Return the actual status (sent or delivered)
             });
             
             log(`✅ Confirmed to sender ${data.senderId}: message ${messageId} status ${status}`);
